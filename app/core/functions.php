@@ -16,6 +16,51 @@ function query(string $query, array $data = [])
     return false;
 }
 
+function redirect($page)
+{ 
+    header('Location:'.$page);
+    die;
+}
+
+function old_value($key)
+{
+    if(!empty($_POST[$key]))
+    return $_POST[$key];
+    return "";
+}
+
+function old_checked($key)
+{
+    if(!empty($_POST[$key]))
+    return "checked";
+    return "";
+}
+
+function str_to_url($result)
+{
+    $url=str_replace("'","",$url);
+    $url=preg_replace('~[^\\pL0-9_]+~u','-',$url);
+    $url=trim($url,"-");
+    $url=iconv("utf-8","us-ascii//TRANSLIT",$url);
+    $url=strtolower($url);
+    $url=preg_replace('~[^-a-z0-9_]+~','',$url);
+
+    return $url;
+}
+
+function authenticate($row)
+{
+    $_SESSION['USER'] = $row;
+}
+function logged_in()
+{
+   if(!empty( $_SESSION['USER']))
+      return true;
+
+   return false;
+}
+
+
 //create_tables();
 function create_tables()
 {
@@ -31,18 +76,18 @@ function create_tables()
     $stm->execute();
 
     //kullanıcılar tablosu 
-    $query = "create table if not exists kullanicilar(
+    $query = "create table if not exists users(
     
         id int primary key auto_increment,
-        kullanici_adi nvarchar(50) not null,
-        e_mail nvarchar(100) not null,
-        sifre varchar(50) not null,
-        kullanici_resmi varchar(1024) null,
-        tarih datetime default current_timestamp,
-        rol varchar(50) not null,
+        username nvarchar(50) not null,
+        email nvarchar(100) not null,
+        password varchar(50) not null,
+        image varchar(1024) null,
+        date datetime default current_timestamp,
+        role varchar(50) not null,
         
-        key kullanici_adi (kullanici_adi),
-        key e_mail (e_mail)
+        key username (username),
+        key email (email)
     
     
     )";
@@ -50,16 +95,16 @@ function create_tables()
     $stm->execute();
 
     //kategori tablosu
-    $query = "create table if not exists kategoriler(
+    $query = "create table if not exists categories(
     
     id int primary key auto_increment,
-    kategori nvarchar(50) not null,
+    category nvarchar(50) not null,
     slug nvarchar(100) not null,
-    devre_disi tinyint default 0,
+    disabled tinyint default 0,
 
     
     key slug (slug),
-    key kategori (kategori)
+    key category (category)
 
 
 )";
@@ -67,21 +112,22 @@ $stm = $con->prepare($query);
 $stm->execute();
 
 //gönderiler 
-$query = "create table if not exists gonderiler(
+$query = "create table if not exists posts(
     
 id int primary key auto_increment,
-kullanici_id int,
-kategori_id int,
-baslik nvarchar(100) not null,
-icerik text null,
-resim varchar(1024) null,
-tarih datetime default current_timestamp,
+user_id int,
+category_id int,
+title varchar(100) not null,
+content text null,
+image varchar(1024) null,
+date datetime default current_timestamp,
 slug varchar(100) not null,
-key kullanici_id (kullanici_id),
-key kategori_id (kategori_id),
-key baslik (baslik),
+
+key user_id (user_id),
+key category_id (category_id),
+key title (title),
 key slug (slug),
-key date (tarih)
+key date (date)
 
 )";
 $stm = $con->prepare($query);

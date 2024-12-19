@@ -1,3 +1,59 @@
+<?php
+if (!empty($_POST)) {
+    $errors = [];
+
+    if (empty($_POST['username'])) {
+        $errors['username'] = "Kullanıcı adı gerekli.";
+    } else if (!preg_match("/^[a-zA-Z]+$/", $_POST['username'])) {
+        $errors['username'] = "Kullanıcı adı yalnızca harflerden oluşabilir ve boşluk kullanmayınız.";
+    }
+
+
+    // E-posta doğrulama
+    if (empty($_POST['email'])) {
+        $errors['email'] = "E-mail gerekli.";
+    } 
+    else {
+        if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = "Geçersiz e-posta formatı.";
+        } else { // Format doğruysa veritabanı kontrolü yap
+            $query = "SELECT id FROM users WHERE email = :email LIMIT 1";
+            $email_check = query($query, ['email' => $_POST['email']]);
+            if ($email_check) {
+                $errors['email'] = "Bu e-mail kullanılıyor.";
+            }
+        }
+    }
+
+    if (empty($_POST['password'])) {
+        $errors['password'] = "Şifre gerekli.";
+    } else if (strlen($_POST['password']) < 8) {
+        $errors['password'] = "Şifre 8 karakter veya daha fazla olmalı.";
+    } else if ($_POST['password'] !== $_POST['retype_password']) {
+        $errors['password'] = "Şifreler eşleşmiyor.";
+    }
+
+    if (empty($_POST['terms'])) {
+        $errors['terms'] = "Lütfen şartları kabul edin.";
+    }
+
+    if (empty($errors)) {
+        $data = [];
+        $data['username'] = $_POST['username'];
+        $data['email'] = $_POST['email'];
+        $data['role'] = "user";
+        $data['password'] = password_hash($_POST['password'], PASSWORD_DEFAULT);
+        $query = "INSERT INTO users (username, email, password, role) VALUES (:username, :email, :password, :role)";
+        query($query, $data);
+
+        redirect('login');
+    }
+}
+?>
+
+
+
+
 <!doctype html>
 <html lang="en" data-bs-theme="auto">
   <head><script src="../assets/js/color-modes.js"></script>
@@ -150,30 +206,54 @@
     <img class="mb-4 shadow" src="<?=ROOT?>/assests/image/re7.jpg" alt="" width="300" height="150" style="object-fit: cover; ">
     </a>
     <h1 class="h3 mb-3 fw-normal">Create Account </h1>
-   
+
+      <?php if(!empty($errors)):?>
+        <div class="alert alert-danger">Please fix the errors below</div>
+      <?php endif;?>
+
     <div class="form-floating">
-      <input name="username" type="text" class="form-control mb-2" id="floatingInput" placeholder="Username">
+      <input value="<?=old_value('username')?>" name="username" type="text" class="form-control mb-2" id="floatingInput" placeholder="Username">
       <label for="floatingInput">Username</label>
     </div>
+
+       <?php if(!empty($errors['username'])):?>
+         <div class= "text - danger"><?=$errors['username']?></div>
+       <?php endif;?>
+    
     <div class="form-floating">
-      <input type="email" class="form-control mb-2" id="floatingInput" placeholder="name@example.com">
+      <input name="email" value="<?=old_value('email')?>" type="email" class="form-control mb-2" id="floatingInput" placeholder="name@example.com">
       <label for="floatingInput">Email address</label>
     </div>
+
+    <?php if(!empty($errors['email'])):?>
+         <div class= "text - danger"><?=$errors['email']?></div>
+       <?php endif;?>
+
     <div class="form-floating">
-      <input name="password" type="password" class="form-control mb-2" id="floatingPassword" placeholder="Password">
+      <input value="<?=old_value('password')?>" name="password" type="password" class="form-control mb-2" id="floatingPassword" placeholder="Password">
       <label for="floatingPassword">Password</label>
     </div>
+
+    <?php if(!empty($errors['password'])):?>
+         <div class= "text - danger"><?=$errors['password']?></div>
+       <?php endif;?>
+
     <div class="form-floating">
-      <input name="retype_password" type="password" class="form-control mb-2" id="floatingPassword" placeholder="Retype Password">
+      <input value="<?=old_value('retype_password')?>" name="retype_password" type="password" class="form-control mb-2" id="floatingPassword" placeholder="Retype Password">
       <label for="floatingPassword">Password</label>
     </div>
     <div class="my-2">Bir hesaba sahip misiniz? <a href="<?=ROOT?>/login">Giriş Yapın </a></div>
     <div class="form-check text-start my-3">
-      <input name="terms" class="form-check-input" type="checkbox" value="remember-me" id="flexCheckDefault">
+      <input <?=old_checked('terms')?> name="terms" class="form-check-input" type="checkbox" value="remember-me" id="flexCheckDefault">
       <label class="form-check-label" for="flexCheckDefault">
         Şartlar ve Koşulları Kabul Ediyorum
       </label>
     </div>
+
+    <?php if(!empty($errors['terms'])):?>
+         <div class= "text - danger"><?=$errors['terms']?></div>
+       <?php endif;?>
+
     <button class="btn btn-primary w-100 py-2" type="submit">Create </button>
     <p class="mt-5 mb-3 text-body-secondary">&copy;  vakkevırrak- <?= date ("Y") ?></p>
   </form>

@@ -1,3 +1,28 @@
+<?php
+
+if (!empty($_POST)) {
+    //validate 
+    $errors = [];
+
+    $query = "select * from users where email = :email LIMIT 1";
+    $row = query($query, ['email' => $_POST['email']]);
+
+    if ($row)
+     {
+        if (password_verify($_POST['password'], $row[0]['password'])) {
+            //grant access
+            authenticate($row[0]);
+            header('Location:' .$admin);
+           
+        } 
+        else 
+        {
+            $errors['email'] = "Yanlış e-mail veya parola.";
+        }
+    }
+}
+?>
+
 <!doctype html>
 <html lang="en" data-bs-theme="auto">
   <head><script src="../assets/js/color-modes.js"></script>
@@ -6,7 +31,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <title>Login Page<?=APP_NAME?></title> 
-    <link href="<?=ROOT?>/assests\bootstrap\css\bootstrap.min.css" rel="stylesheet">
+    <link href="<?=ROOT?>\assests\bootstrap\css\bootstrap.min.css" rel="stylesheet">
 
     <style>
       .bd-placeholder-img {
@@ -150,13 +175,17 @@
     <img class="mb-4 shadow" src="<?=ROOT?>/assests/image/re7.jpg" alt="" width="300" height="150" style="object-fit: cover; ">
     </a>
     <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+   
+      <?php if(!empty($errors['email'])):?>
+          <div class= "alert alert-danger"><?=$errors['email']?></div>
+        <?php endif;?>
 
     <div class="form-floating">
-      <input name="email"type="email" class="form-control mb-2" id="floatingInput" placeholder="name@example.com">
+      <input value="<?=old_value('email')?>" name="email"type="email" class="form-control mb-2" id="floatingInput" placeholder="name@example.com">
       <label for="floatingInput">Email address</label>
     </div>
     <div class="form-floating">
-      <input name="password" type="password" class="form-control mb-2" id="floatingPassword" placeholder="Password">
+      <input value="<?=old_value('password')?>" name="password" type="password" class="form-control mb-2" id="floatingPassword" placeholder="Password">
       <label for="floatingPassword">Password</label>
     </div>
 
